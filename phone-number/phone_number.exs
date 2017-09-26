@@ -1,4 +1,6 @@
 defmodule Phone do
+  @bad_number "0000000000"
+
   @doc """
   Remove formatting from a phone number.
 
@@ -24,6 +26,34 @@ defmodule Phone do
   """
   @spec number(String.t) :: String.t
   def number(raw) do
+    case has_alpha?(raw) do
+      true -> raw
+              |> String.replace(~r/[\(\)\.\-\s\+]/, "")
+              |> do_number
+      _ ->  @bad_number
+    end
+  end
+
+  defp do_number(<<area_code::binary-3>> <> <<num::binary-7>>) do
+    cond  do
+      invalid?(area_code) -> @bad_number
+      invalid?(num) -> @bad_number
+      true -> "#{area_code}#{num}"
+    end
+  end
+  defp do_number("1" <> <<num::binary-10>>), do: num
+  defp do_number(_invalid_num), do: @bad_number
+
+
+  defp has_alpha?(raw) do
+    case Regex.scan(~r/[a-zA-Z]/, raw) do
+      [] -> true
+      _ -> false
+    end
+  end
+
+  defp invalid?(num) do
+    String.starts_with?(num, ["0", "1"])
   end
 
   @doc """
@@ -48,6 +78,8 @@ defmodule Phone do
   """
   @spec area_code(String.t) :: String.t
   def area_code(raw) do
+    <<area_code::binary-3>> <> _num = number(raw)
+    area_code
   end
 
   @doc """
@@ -72,5 +104,8 @@ defmodule Phone do
   """
   @spec pretty(String.t) :: String.t
   def pretty(raw) do
+    <<area_code::binary-3>> <> <<first::binary-3>> <> <<last::binary-4>>
+      = number(raw)
+    "(#{area_code}) #{first}-#{last}"
   end
 end
