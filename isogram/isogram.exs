@@ -4,7 +4,13 @@ defmodule Isogram do
   """
   @spec isogram?(String.t) :: boolean
   def isogram?(sentence) do
+    parts =
+      sentence
+      |> String.downcase
+      |> String.replace(~r/[^\w]/u, "")
+      |> String.split("", trim: true)
 
+    parts == Enum.uniq(parts)
   end
 
 end
